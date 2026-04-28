@@ -1,8 +1,8 @@
 # EXPERIMENT-02-INTERFACTING-DIGITAL-SENSOR-WITH-EDGE-DEVELOPMENT-BOARD-ULTRASONIC-AND-PIR-SENSOR-(RASPBERRYPI-PI4)
-### NAME 
-### DEPARTMENT 
-### ROLL NO 
-### DATE OF EXPERIMENT 
+### NAME : Beatrice Thomas
+### DEPARTMENT : CSE IOT
+### ROLL NO : 212223110005
+### DATE OF EXPERIMENT : 28/4/26
 
 ### AIM
 To interface a digital sensor (Ultrasonic and PIR) with the Raspberry Pi 4 and control it using Python.
@@ -59,10 +59,70 @@ Connect the PIR sensor Vcc to any +5V.
 Connect the PIR sensor GND to any GND.
 Connect the PIR sensor OUT to any one GPIO. 
 
-Experiment 2A
+## Experiment 2A
 ## PROGRAM (Python)
 ```
+import RPi.GPIO as GPIO
+import time
+import requests
 
+# ThingSpeak settings
+API_KEY = "FUV379VG54E5M7V2"
+THINGSPEAK_URL = "https://api.thingspeak.com/update"
+
+# GPIO pins
+TRIG = 18
+ECHO = 23
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(TRIG, GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
+
+def get_distance():
+    GPIO.output(TRIG, False)
+    time.sleep(0.5)
+
+    # Trigger pulse
+    GPIO.output(TRIG, True)
+    time.sleep(0.00001)
+    GPIO.output(TRIG, False)
+
+    while GPIO.input(ECHO) == 0:
+        pulse_start = time.time()
+
+    while GPIO.input(ECHO) == 1:
+        pulse_end = time.time()
+
+    pulse_duration = pulse_end - pulse_start
+    distance = pulse_duration * 17150
+    distance = round(distance, 2)
+
+    return distance
+
+try:
+    while True:
+        distance = get_distance()
+
+        # Console output
+        print("distance =", distance, "cm")
+
+        # Text message for ThingSpeak
+        status_text = f"distance = {distance} cm"
+
+        # Send data to ThingSpeak
+        payload = {
+            "api_key": API_KEY,
+            "field1": distance,   # numeric for chart
+            "status": status_text # text message
+        }
+
+        response = requests.get(THINGSPEAK_URL, params=payload)
+        print("Sent to ThingSpeak")
+
+        time.sleep(15)
+
+except KeyboardInterrupt:
+    GPIO.cleanup()
 
  
 
@@ -70,36 +130,75 @@ Experiment 2A
 
  
 ````
-
 ### OUPUT  
-Experiment 2A
+<img width="1600" height="1200" alt="WhatsApp Image 2026-04-28 at 2 32 02 PM" src="https://github.com/user-attachments/assets/42aeef2e-db38-4b71-9a6c-f03085b67e13" />
 
-# FIGURE -04 ADD TITILE HERE 
+<img width="1678" height="983" alt="Screenshot 2026-04-28 141116" src="https://github.com/user-attachments/assets/e004bd36-bb93-4b2a-b50b-e13345fe8d77" />
 
-#  FIGURE -05 ADD TITILE HERE 
+<img width="1765" height="825" alt="Screenshot 2026-04-28 141858" src="https://github.com/user-attachments/assets/c7490abe-3576-417f-8359-649cae4fa91d" />
 
-# FIGURE -06 ADD TITLE HERE 
 
-Experiment 2B
+
+
+## Experiment 2B
 ## PROGRAM (Python)
 ```
 
+import RPi.GPIO as GPIO
+import time
+import requests
 
+WRITE_API_KEY = "FUV379VG54E5M7V2"
+URL = "https://api.thingspeak.com/update"
+
+PIR_PIN = 24
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PIR_PIN, GPIO.IN)
+
+print("PIR Monitoring Started...")
+time.sleep(2)
+
+last_state = -1   # store previous state
+
+def update_thingspeak(state):
+    data = {
+        "api_key": WRITE_API_KEY,
+        "field1": state
+    }
+    try:
+        requests.get(URL, params=data)
+        print("Uploaded to ThingSpeak:", state)
+    except:
+        print("Upload Failed")
+
+while True:
+    motion = GPIO.input(PIR_PIN)
+
+    if motion != last_state:   # send only if changed
+        if motion == 1:
+            print("Motion Detected")
+            update_thingspeak(1)
+        else:
+            print("No Motion")
+            update_thingspeak(0)
+
+        last_state = motion
+        time.sleep(15)  # ThingSpeak delay
+
+    time.sleep(1)
  
-
-
-
- 
-````
-
+ ```
 ### OUPUT  
-Experiment 2B
+<img width="899" height="1599" alt="WhatsApp Image 2026-04-28 at 2 30 26 PM" src="https://github.com/user-attachments/assets/dcd2fa29-52c7-49f1-a2f9-6839125f97b6" />
 
-# FIGURE -07 ADD TITILE HERE 
+<img width="1680" height="996" alt="Screenshot 2026-04-28 143530" src="https://github.com/user-attachments/assets/8b06ca2f-5c52-488d-87e7-3b968f375013" />
 
-#  FIGURE -08 ADD TITILE HERE 
+<img width="1806" height="885" alt="Screenshot 2026-04-28 143537" src="https://github.com/user-attachments/assets/7e137ff1-cfb0-4546-8a27-515a5a3ae9fa" />
 
-# FIGURE -09 ADD TITLE HERE 
+<img width="1678" height="864" alt="Screenshot 2026-04-28 143610" src="https://github.com/user-attachments/assets/5bf443e7-fe01-4f74-a6bb-c2266bea2654" />
+
+<img width="1777" height="878" alt="Screenshot 2026-04-28 143616" src="https://github.com/user-attachments/assets/83626310-575b-41d2-9ed7-682ce6ef9597" />
 
  
 ## RESULTS
